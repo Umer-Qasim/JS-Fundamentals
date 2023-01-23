@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --primary-color: #A96E44;
+            --secondary-color: rgb(236, 210, 196);
+            --text-color: rgb(93, 26, 0);
+        }
+
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body,
+        html {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--primary-color);
+            width: 100vw;
+            height: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: scroll;
+        }
+
+        h1,h2 {
+            margin: 0.5rem 0;
+        }
+
+        h2 {
+            font-size: xx-large;
+        }
+
+        h3 {
+            font-size: xx-large;
+        }
+
+        p {
+            font-size: x-large;
+        }
+
+        a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 700;
+            font-size: large;
+        }
+
+        .btn {
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+            border-radius: 40px;
+            margin: 1rem 0;
+            width: 70%;
+            border: var(--text-color) 2px solid;
+            padding: 1rem 1.5rem;
+            transition: all 0.2s ease-in;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            background-color: var(--text-color);
+            color:whitesmoke;
+        }
+
+        /* .btn:nth-of-type(2) {
+            display: none;
+        } */
+
+        a:hover {
+            color:whitesmoke;
+        }
+
+        #grid-container {
+            display: grid;
+            width: 60%;
+            grid-template-columns: 2fr 1fr;
+            box-shadow: 1px 1px 70px 1px rgba(0, 0, 0, 0.329);
+        }
+
+        .grid-item {
+            text-align: center;
+            color: var(--text-color);
+            padding: 2rem;
+            justify-content: center;
+        }
+
+        .grid-item:nth-of-type(1) {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: whitesmoke;
+            grid-row: 1 / span 3;
+        }
+
+        .grid-item:nth-of-type(1) > div {
+            border-radius: 50%;
+            padding: 4px;
+            width: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 3px var(--text-color) solid; 
+            border-left: 3px var(--text-color) solid; 
+            border-bottom: 3px var(--text-color) solid; 
+            border-right: 3px whitesmoke solid; 
+            margin: 3rem 0;
+            /* background-color: yellow; */
+        }
+
+        .grid-item:nth-of-type(1) > div > img {
+            border-radius: 50%;
+            border-top: 3px var(--text-color) solid; 
+            border-right: 3px var(--text-color) solid; 
+            border-left: 3px whitesmoke solid; 
+            border-bottom: 3px var(--text-color) solid; 
+            width: 100%;
+        }
+
+        .small-card {
+            background-color: var(--secondary-color);
+            border-bottom: whitesmoke 2px solid;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .small-card:last-child {
+            border: none;
+        }
+
+        .grid-item:nth-of-type(1) > p {
+            margin-bottom: 3rem;
+        }
+
+        label, input {
+            display: block;
+            width: 90%;
+            margin: 10px;
+            padding: 5px;
+        }
+
+        @media screen and (max-width: 768px) {
+            #grid-container {
+                width: 80%;
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+
+    </style>
+    <title>DOM</title>
+</head>
+<body>
+    <div id="grid-container">
+        <div class="grid-item">
+            <div id="img-container">
+                <img src="./profile.jpg" alt="Profile Picture">
+            </div>
+            <h2 id="name">Umer Qasim</h2>
+            <p>Visual Artist</p>
+            <a href="" class="btn">Follow</a>
+            <a href="#" class="btn">Message</a>
+        </div>
+        <div class="grid-item small-card">
+            <h3>523</h3>
+            <p>Posts</p>
+        </div>
+        <div class="grid-item small-card">
+            <h3>1387</h3>
+            <p>Likes</p>
+        </div>
+        <div class="grid-item small-card">
+            <h3>146</h3>
+            <p>Followers</p>
+        </div>
+        <div class="grid-item small-card">
+            <form>
+                <label>Add a Task</label>
+                <input type="text" name="task" id="task">
+                <button type="submit" class="btn">Submit</button>
+            </form>
+        </div>
+
+
+    </div>
+    <script src="./dom.js"></script>
+</body>
+</html>

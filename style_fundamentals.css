@@ -1,0 +1,408 @@
+/*---------------Domain Name System(DNS) resolution----------*/
+/*
+ * The DNS resolution process involves at least 4 servers after failing to find an address locally, the browser only
+ * sends its request to recursor and then waits for recursor to provide a resolved response/IP address
+ * 1. Recursor server or DNS Recursor - Provided by the ISP, first step, can be thought as a librarian, makes all requests
+ * 2. Root nameserver - Second step, reference to further specific locations, can be thought of as a row number of racks
+ * 3. TLD nameserver - Top level domain server, resolves last part i.e. .com etc., can be thought of as a rack# with books
+ * 4. Authoritative nameserver - Final step, By hosting provider, Can be thought as dictionary on that rack with all definitions 
+*/ 
+/* ------------- The CSS Fundamentals ------------*/
+/* How browser renders a web page: https://medium.com/jspoint/how-the-browser-renders-a-web-page-dom-cssom-and-rendering-df10531c9969 
+ * --------------The HTML Rendering---------------- *
+ * The browser looks up for the ip address associated to the DOMAIN and sends it a get request
+ * The server then responds by sending a HTML page/doc with BINARY STREAM FORMAT in it
+ * This BSF is basically a text file with the headers of content-type=text/html and charset = UTF-8
+ * The content-type header and the char encoding helps the browser decode and convert the binary into the html format
+ * We can check the headers of a request and the hosting server info, CORS info in the network tab of browser
+ * If there is no header present the browser will simply render the file in text format 
+ * Now the browser starts reading/parsing the html document
+ * For each line-break, comment, html element the browser creates an equivalent JS NODE
+ * NODE is a parent class in Js and it has sub classes like HTMLDivElement, HtmlScriptElement, HTMLAudioElement, HTMLButtonElement... so on
+ * NODE also has sub classes like Comment etc
+ * So the browser calls the respective subclass' constructor to create the Js objects e.g. for every div element the browser will call new HTMLDivElement()
+ * After creating all the objects the browser creates a tree structure with the html object/element at the root
+ * This tree structure of equivalent html elements/objects is called the Document Object Model
+ * Unlike the CSSOM the DOM consists of all type of element i.e. either visble on the screen or not e.g. comments, script or link or meta tags
+ * The document object model can be manipulated by using a clientside web api exposed by the browser i.e. the document api
+ * More about Api here: https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Client-side_web_APIs/Introduction
+ * The DOMContent loaded fn is a good performance matrix and it runs when the browser has finished the parsing of html DOM
+ * The window.onload executes when all the external script, image and stylesheets are downloaded
+
+/*-------------- CSS Behind the Scenes -----------*/
+/* 
+ * The browser rendering happens in a certain format
+ * 1. Browser loads HTML
+ * 2. Starts parsing HTML, when comes to <link rel="stylesheet"> starts loading CSS and continues HTML
+ * 2.1 Browser parses HTML => Browser develops DOM
+ * 2.2.1 Browser starts parsing CSS
+ * 2.2.1.1 While Parsing CSS two things happen:
+         i.  Browser resolves conflicting CSS  i.e. determines which declaration to apply to 
+             certain HTML parts, based on the specificity of selectors
+         ii. Browser computes the style values in pixels i.e. percentages etc are converted
+             literal values.
+
+ * 2.2 CSSOM [CSS OBJECT MODEL] is created
+
+ * 3. DOM + CSSOM = Render Tree is created
+
+ * 4. Website rendering: Visual formatting model/Layout/Reflow
+
+ * 5. Final website rendered/Compositing
+*/
+
+/*-------------- Critical Rendering Path -----------*/
+/* The browser loads the web page in a certain sequence:
+ * As soon as it receives a few characters or lines of the html response in binary stream format it starts parsing the doc for DOM Creation
+ * This DOM parsing happens on the main thread and all the other download operations of external resources are done concurrently on other threads
+ * The browser creates DOM INCREMENTLY i.e. one node after another as the html is a nested structure like a tree
+ * If the browser encounters an embedded or inline style it will concurrently create the CSSOM on the main thread and this will not block the DOM Parsing
+ * If the browser encounters an external style sheet through a link tag it will not block the dom parsing but will download that sheet on the side silently
+ * The browser when will finish parsing DOM THEN IT WILL CREATE THE CSSOM AT ONCE RATHER THAN CREATING IT INCREMENTLLY ALONG THE DOM CREATION 
+ * This happens because if the CSSOM creation was done incrementlly the cascading effect/style overriding will trigger several re renders for render tree
+ * THE ONLY WAY CSS WILL BLOCK THE CRITICAL RENDERING PATH IS IF THE BROWSER IS DONE PARSING DOM BUT THE STYLES ARE STILL DOWNLOADING HENCE BLOCKING THE RENDER TREE
+ * The critical rendering path is as follows:
+ * DOM CREATION/SCRIPT EXECUTION => CSSOM CREATION => RENDER TREE CREATION => LAYOUT OPERATION => PAINT OPERATION(LAYERS OF CONTENT/Z-AXIS) => COMPOSITING OPERATION
+*/
+
+/*----------- CSS Terms -----------*/
+/*
+ * RULE: A css rule consists of a selector and a declaration block
+ * DECLARATION: A css declaration consists of a property and a declared value
+ * PSEUDO ELEMENTS: A pseudo-element is a ‘fake’ element, it isn’t really in the document with 
+ * the ‘real’ ones e.g. p::after, p::before, p::first-letter, p::first-line
+ * PSEUDO CLASSES: These are like ‘fake’ classes that are applied to elements under certain 
+ * conditions, much like how you would manipulate the classes of elements using JavaScript e.g.:
+ * p:first-child, p:hover, :root etc
+
+// THE CSSOM IS ALL ABOUT FINDING THE RIGHT CSS VALUE FOR EACH COMPONENT OR RESOLUTION OF VALUE FOR AN ELEMENT
+
+
+/*----------- Specificity(CASCADING) of CSS Selectors -----------*/
+/*
+ * CASCADE: Process of combining different stylesheets and resolving conflicts
+ * between different CSS rules and declarations, when more than one rule applies to 
+ * a certain element.
+ * There are SEVERAL SOURCES for CSS in a browser:
+   i.   The CSS written by the developer known as AGENT CSS
+   ii.  The CSS controlled by user e.g. user sets a specific font size in browser,
+        this stylesheet is known as USER CSS
+   iii. The CSS which is by default applied by the browser e.g. link tag appears blue and 
+        underlined, these are called USER-AGENT CSS and IT MIGHT ME DIFFERENT FOR DIFFERENT BROWSERS(Good to normalize/Reset css for cross browser)
+    iv. The CSS specifications according to W3 schools
+
+
+ * ---------------------- WHICH CSS TO BE APPLIED-------------------
+ * The browser determines which CSS to be applied to certain HTML using a set of rules:
+ * Source and Priority [!important] > SPECIFICITY > SOURCE ORDER
+
+
+
+ * ******* Source & Priority ********
+ * The normal priority of Sources is as follows:
+ * Inline Agent > External/Embedded Agent(depends <link> comes later or <style>) > User > User-AGENT > W3C
+ * These are the most prioritized set of declartions which include !important keyword
+ * They have the following specificty according to CSS sources
+ * User Agent !important > User Important > Agent Inline !important / Agent Embedded !important/Agent External !important > User-AGENT > W3C
+
+ * ******* SPECIFICITY ********
+ * In case there is a tie between two or more declaration originating from the same source then specificity is checked
+ * The specificity regarding an individual source is as follows:
+ * Inline > IDs > classes, pseudo-classes, attributes > Elements, pseudo elements
+ * Calculation of specificity (Inline, IDs, Classes, Elements)
+ * nav#menu div.pull-right .button = (0, 1, 2, 2)
+
+ * ******* ORDER ********
+ * In case the specificity of the declarations also results in same value the order of declarations is checked
+ * The conflicting declarations with equal specificty are resolved by determining their order
+ * The declartion which was the included later most will win here
+
+ * ******* NOTE ********
+ * TO TARGET THE HOVER, CHECKED, ENABLED ETC. PSEUDO CLASSES OF AN ELEMENT, THE SPECIFICITY OF 
+ * THE STYLE APPLIED WITHOUT ANY PSEUDO CLASS SHOULD BE LOWER OR EQUAL TO THE SPECIFICITY OF
+ * SELECTOR USING WHICH WE ARE APPLYING THE PSEUDO STATE CSS
+ * e.g. #div a.link {background-color: black} with a:hover {background-color:blue} wont work
+ * This also applies to the media queries when overwriting styles
+
+
+/*----------- Determination of final CSS Values -----------*/
+/*
+ * 1. DECLARED VALUE: At this step browser finds all the declared values for html
+ * 2. CASCADED VALUE: The conflict between declared values is resolved and one is selected
+ * 3. SPECIFIED VALUE: If no cascadded value found then check for inherited values, if inheritance applies then
+                       it is used as a specified value, if no inheritance applicable use initial values from UA stylesheet
+                       If cascaded values was found then it is the specified value directly
+ * 4. COMPUTED VALUE: rem, em and CSS values like orange, auto, bolder all relative values are computed in pixels here
+ * 5. USED VALUE: Final calculation based on layout, e.g. % converted to pixels etc
+ * 6. ACTUAL VALUE: The browser finally rounds off and uses this values in layout
+
+ ************* LEARNING OUTCOMES **************
+ * Each property has an initial value, used if nothing is declared and no inheritance is applicable
+ * Browsers specify a root-font-size of 16px i.e. from the User agent CSS not from CSS specification
+ * % and relative values are always converted to pixels
+ * %ages are measured relative to parent's font-size, if used to specify font-size
+ * %ages are measured relative to parent's WIDTH & HEIGHT if used to specify the lengths
+ * em are measured relative to their PARENTS font size if used to specify font size
+ * em are measured relative to their CURRENT font size if used to specify lengths
+ * rem are always measured relative to document's root font-size i.e. 16px
+ */
+ 
+/*----------- Inheritance in CSS -----------*/
+/*
+ * EVERY PROPERTY in css should have a VALUE
+ * While parsing the CSS the browser tries to find the cascaded value of an element first
+ * If no declared or cascaded value is found, it tries to check if the element has an
+ * INHERITED VALUE e.g. if parent has a line height, the child will automatically get it by inheritance
+ * If the property is non inheritable, the browser will set the specified value equal to the one
+ * defined in the CSS Specifications as initial value i.e. specified value = initial value
+
+************* LEARNING OUTCOMES **************
+ * Inheritance passes value to children in case of some SPECIFIC PROPERTIES
+ * As a rule of thumb properties related to TEXT AND FONTS ARE INHERITED e.g. text-align
+ * font-size, color, line-height etc.
+ * Inheritance only works when neither the browser nor the developer specify any values for a given element
+ * The "inherit" keyword can be used to FORCE INHERITANCE on a property
+ * The "initial" keyword can be used to FORCE RESET any property being inherited to initial value
+*/
+
+
+/*----------- rem and other CSS tricks -----------*/
+/*
+ * To make the code more maintainable and responsive always use rem units as lengths and font-size
+ * The default user-agent root font size is 16px which is inherited by all elements by default
+ * To make the lenghts and fonts fully responsive with a single line media query, we should set
+ * the ROOT FONT SIZE TO 10PX. But we should do so by taking %age of user-agent font-size i.e.
+ * 62.5% of 16px = 10px => :root { font-size: 62.5%; }
+ * NOW USE rem UNITS EVERYWHERE IN THE REST OF THE CSS e.g. for 30 px use 3rem for 25 use 2.5rem
+ 
+ * Also the UNIVERSAL RESET should be *, *::after, *::before { margin:0; padding:0 box-sizing:inherit }
+ * ALONGWITH body { box-sizing: border-box; }
+ */
+
+
+/*----------- RESPONSIVE DESIGN TRICKS -----------*/
+/* ------------General Layout/Containers----------
+ * For container we usually have a problem if we just set the width to 90% they become too wide on large screens
+ * If we set 50 or 60% the width gets too small on the mobile devices So we should use WIDTH:90% ALONGWITH MAX-WIDTH:960PX;
+ * Using width and max-width together will allow us to scale the layout from getting too big or too small for screens
+ * FOUND THE GOLD: https://developer.mozilla.org/en-US/docs/Web/CSS/clamp() 
+ *
+ *---------------For Images------------------------
+ * In general set the rule img {max-width: 100%; display: block}
+ * Setting max-width 100% will stop  the images go out of the containers and display block will make them avoid the
+ * font like behaviour meaning they will not stay above the line like the bottom of the a text line is aligned
+ * USE THE object-fit property where necassary to make the image fit a size without losing its dimensions
+ * 
+ *---------------Units------------------------
+ * As a general rule of thumb use:
+ * rem for font-sizes
+ * em for paddings and margins
+ * %ages and em for widths
+ *
+ *---------------Fun Facts---------------------
+ * We can use Emojis as class names as well 
+ * We can use ascpect ratio to maintain the aspect ratio of an image or video but not well supported yet
+ * WE CAN USE INLINE VARIABLES, ASSIGN A VALUE TO THEM AND THEN USE THEM IN THE CSS CALC FUNCTION OR IN GENERAL TO 
+ * PERFORM COOL THINGS
+ * animation-fill-mode: backwards; WILL SET OUR ELEMENT TO INITIAL POSITION IN THE KEY FRAME RATHER THAN
+   RENDERING AND THEN STARTING THE ANIMATION
+*/
+
+
+
+/*----------- Visual formatting model CSS ------------*/
+/*
+ * The visual form. model actually refers to the algorithm the browser uses to determine
+ * how a page will look/rendered by calculating boxes and determining layout of each element
+ * in the render tree
+ * The visual formatting model of CSS for an element is detemined based on the following factors:
+   1. Dimensions of the boxes: The box model
+   2. Box-type: inline, block, inline-block
+   3. Positioning Scheme: static, float, absolute, relative, sticky, fixed
+   4. Stacking context: means z-index etc
+   5. Other elements in the render tree i.e. parents, siblings
+   6. Viewport size, image size etc
+
+   i) The Box Model
+       Considers each and every element as a box that can have a height, a width, paddings, border,
+       margins
+       The height and width combined constitute the content area
+       The padding and margins are optional i.e. they can be 0 as well
+       The values of padding and border width are added to the content to determine total width of box
+       fill-area: The fill area is considered as the padding + border + content and all the
+       background-color or background-image apply to this whole area rather than just the content 
+       BORDER-BOX:The box-sizing property allows us to include the padding and border in an element's 
+       total width and height. The width and height we set give priority to the padding and border only i.e. their 
+       values are allocated in the layout no matter how much the browser have to squeze the content's width and height
+       SO IN CASE THE PADDING LEFT + PADDING RIGHT +BORDER LEFT + BORDER RIGHT => SPECIFIED WIDTH AND HEIGHT the total value
+       value of padding + borders is applied to the box rather than the specified height and width
+       CONTENT-BOX: The default value of box-sizing and specifies the width and height on content only i.e. padding and
+       border values are additionally applied to the element
+  ii) The Box Type
+      The Box type can be block, inline-block, inline
+
+      BLOCK: 
+       The display: block, flex, list-item, table convert an element into a block level elem
+       The block level element occupies 100% of its parent's WIDTH
+       Block level elements appear vertically one after other
+      INLINE:
+       The display:inline
+       The content is distributed in lines
+       Occupies only content's WIDTH
+       No width or height can be specified
+       Paddings and margins can only be applied horizontally left and right
+      INLINE-BLOCK:
+       Content is distributed in lines
+       Width and height can be applied
+       Occupies only content's space
+       No line-breaks
+       Box-model applies as normal i.e. padding and margin
+
+ iii) The Positioning Scheme
+      FLOAT: 
+       Other elements wrap around the floated element
+       Container(Parent) will not adjust its height according to the floated element
+       To avoid the next elements filling in the space left below the floated elements
+       we use clear on the oncoming elements so they clear the floats from both directions
+       The element is not removed from the normal flow
+
+      ABSOLUTE POSITIONING:
+       Element is removed from the normal flow
+       position: absolute and position: fixed specify absolute positioning
+       No impact on surrounding content or elements
+
+  iv) The Stacking Context
+      z-index, tranform, opacity less than 1 create a new stacking context
+      The element at the bottom is painted first
+      The element at the top is painted last
+
+
+/*----------- The BEM naming convention ------------*/
+/*
+ * THINK => BUILD => ARCHITECT are the three phases in a project
+ * When thinking before designing think of building in the form of reusable componets
+ * There is another methodolgy called ATOMIC design and we should explore it as well
+
+ * When building use a specific methodology for naming elements
+ * BEM => Block Element Modifier
+ * BLOCK: A standalone component that has a meaning of its own  e.g. .recipe
+ * ELEMENT: A part of block that has no stand-alone meaning e.g. .recipe__img or .recipe__btn
+ * MODIFIER: A different version of a block OR an element e.g. .btn .recipe__btn .btn--round
+
+ * A very useful article for BEM: https://www.smashingmagazine.com/2016/06/battling-bem-extended-edition-common-problems-and-how-to-avoid-them/
+
+ * When architecting make a proper logical file/folder hierarchy
+ * Learn about ITCSS, SMACS CSS and 7-1 pattern
+ * The 7-1 architecture specifies that we should have 7 different folders for partial SaSS files
+ * All these partial Sass files should be funneled/imported into ONE CSS COMPILED SHEET
+ * These 7 folders include:
+    base/       Basic project definitions
+    components/ One file for each component
+    layout/     Overall layout of the project
+    pages/      Style for specific pages of project
+    themes/     If we want to implement diff visual themes
+    abstracts/  The code which doesnot output any CSS e.g. mixins, variables
+    vendors/    All the third party CSS
+ * Not ALL Folders are always required
+*/
+
+/*----------- SYNTACTICALLY AWESOME STYLE SHEETS ------------*/
+/*
+ * SASS is a CSS pre-processor which is a syntactically better way to write CSS
+ * We can write SASS in two formats i.e. .SCSS OR .SASS
+ * Prefered way to write is SCSS
+ * The .scss file is then compiled to normal css before deploying the project 
+ * The SASS files are not deployed to the server only the compiled css file is deployed
+ * SASS is actually CSS on steroids i.e. we can use variables, loops, conditionals, mixins, functions
+ * // can be used to write comments in scss files
+ * Nesting becomes very easy in SASS by using curly braces we can avoid complicated selectors
+ * & can be used to replace the path of parent selector inside its curly braces
+ * So for .main .main__paragraph we can do is .main{... #{&}__paragraph{...}} which will translate to .main .main__paragraph
+ * Varibales can be defined starting with $ sign
+ * background-color: lighten(#fff, 10%) and darken(#aaa , 20%) can also be used
+ * Mixins are reusable code snippets we can use and are defined as @minxin mixin-name{...}
+ * Mixins can be used as @include mixin-name; and we can also pass vars to these mixins as @include mixin-name($param){...}
+ * Arguments can be passed in the mixin and can be used as normal in the body of the mixin
+ * e.g. @mixin mixin-name($arg-1, $arg-2){here use these args}
+ * We can also use a mixin by defining a media query in it as @mixin mobile{@media(max-width:$varValue){ @content; }} and
+ * then we can use this mixin as @include mobile{flex-drection:column;}
+ * @function function-name($arg-1, $agr-2) {@return $arg-1/$arg-2;}
+ * e.g. margin: function-name(30, 3) * 1px; => margin: 10px; => We can call a function just by name no @ required
+ * We can create a placeholder by using %placeholder-name and then inherit this placeholder
+ * A rule can extend a placeholder by using @extend %placeholder-name;
+ * A palceholder takes all the selectors in which it is being extended and adds their combination 
+ * as selectors for the CSS declartions inside it
+ * Extend should be preferred over mixins only when all the items extending a placeholder are
+ * inherently similar e.g. buttons
+ * If we use _name.scss for a file it wont be compiled by the compiler and we can import this
+ * file simply into our main.scss file by using @use file-name, these files are called partials;
+ * we can also import the partials in the main file using @import "dir/partialname";
+ * conditionals can be used like @if $width == 30px {do something...} else if{...} else{...}
+
+*/
+
+
+/*----------- General CSS Tricks ------------*/
+/*
+ * selector [class^="col"] means select all elements with a className starting with col
+ * selector [class*="col"] means select all elements with a className containing col
+ * selector [class$="col"] means select all elements with a className ending with col
+ * -webkit-background-clip:text;  will clip the background image to text
+ * color: transparent; will make the text transparent so bg image will overlay
+ * set rotateY(180deg) on an element to create a rotational effect
+ * To give rotation a 3d effect set `perspective` on the parent element
+ * backface-visibility: hidden hides the rotated element's flipped content
+ * We can also skew a section rather than using the clip path but then skew inner elements opposite
+ * you can pull a favicon by using href in a link tag as 'https://www.google.com/s2/favicons?domain=search.com'
+ * we can use background-blendmode:screen rather than using an overlay gradient with low opacity
+ * using bg as cover can overflow the container hence ruining the border radius, so use overflow:hidden
+ * -webkit-box-decoration-break:clone,due to an elment's line break treats it as two diff elements 
+ * An image with a caption can be put under the figure tag in html
+ * The caption can be put in the tag figcaption
+ * we can use shape-outside to wrap text in a certain pattern around an element
+ * filter is another very useful css property
+ * &rarr creates a right arrow => useful for buttons 
+ * The video tag can be used to embed a video but the unlike img it should not have src in the tag
+ * <video class="class-name" autoplay mute loop>
+ * Rather we add <source src="../vid.mp4" type="video/mp4"> tag inside the video tag
+ * Add another <source src="../vid.webm" type="video/webm> and text Your browser is not supported
+ * The text will apear when a browser is unable to render any of the above
+ * coverr website has a lot of cover videos
+ * If we want to set any object other than an image as cover we can use object-fit:cover;
+ * background-size can also have a % value means 100% etc
+ * gradient with an angle can be used to overlay an image and create a decent transparent layer
+ * input element does not inherit font-family by default
+ * when we want to exclude last child from a certain style we can do :not(:last-child)
+ * The pseudo element ::-webkit-input-placeholder can be used to change the placeholder color
+ * CSS CAN STYLE AN INPUT BASED ON VALID OR INVALID VALUE input:focus:invalid{...}
+ * The pseudo class :placeholder-shown can check if the user has enetered anything in the input
+ * In the input type radio the same name attribute makes sure that only one of these is selected
+ * The input and label elements are connected to each other via the id(input) and for(label) id
+
+
+/*----------- NPM ------------*/
+/*
+ * The NodeJs is a Javascript runtime using which we can run js on a server rather than a browser
+ * Over the time developers used Node to create libraries and tools called packages for facilitation
+ * These packages include a package manager called npm and it can install the required packages
+ * for us in a project
+ * Some commands used after installing node on a machine
+ * 'node -v' => gives version of node installed
+ * 'npm init' => initializes a Js runtime in a give folder and sets up a package.json file
+ * package.json contains all the data of the project and its dependencies
+ * the devdependencies in package.json are the tools we MUST have to develop the project
+ * the dependecies are simple files/libraries like jquery that are being used in the project
+ * to install node-sass in the our runtime we use command 'npm install node-sass --save-dev'
+ * to use jquery in the project we use 'npm install jquery --save'
+ * The --save-dev and --save flags are used to write these dependencies to package.json file
+ * When we send our project to someone or upload it on github we don't include node_modules folder
+ * Rather we just use 'npm install' command and the package manager auto install all the dependencies
+ * given in the package.json file
+ * To remove a package we can use 'npm uninstall jquery --save' => --save will update package.json
+ * 'edit main.scss' can be used to create a file
+ * To compile sass to css we need to include a script in package.json
+ * we can include "compile:sass" : "node-sass sass/main.scss css/style.css" to the scripts in package.json
+ * Then we use command: 'npm run compile:sass'
+ * Use "node-sass sass/main.scss css/style.css -w" to watch for changes automatically
+ * 'npm install live-server -g' will install live server globally
+ * run 'live-server' on command line to open up a project in browser

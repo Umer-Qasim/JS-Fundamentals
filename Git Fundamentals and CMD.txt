@@ -1,0 +1,58 @@
+Git is a decentralized version control system i.e. multiple developers can work on a project without being
+on a single network
+
+
+Overall Flow of git:
+Working Directory => Staging Area => Local Repository => Remote Repository
+
+Basic Commands:
+1. git init => Initialized/ Sets up git folder/working Directory in your local machine
+
+-----------------For First time setup--------------------------
+  git config --global user.name 'UserName' => Adds user name
+  git config --global user.email 'user@email.com' => Adds user email
+  git config --list => Checks the user credentials
+---------------------------------------------------------------
+
+2. git add <file> => Add File(s) to the index/Staging Area on your local machine
+   git add *.html => Add all html files to the index
+   git add . => Adds all files to the Staging Area
+   git rm --cached <file> To unstage the file or remove it from working tree
+
+3. git status => Check status of working tree/Staging Area on your local machine
+
+4. git commit => Commit changes in index in your local machine
+   git commit -m 'my message' => Skip the vim editor for message 
+
+-----------------Branching out from master--------------------------
+git branch <nameofbranch> => Creates a branch from the LOCAL repository
+git checkout <nameofbranch> => Switches to the named branch
+THEN SWITCH BACK TO MASTER WHEN DONE WORKING ON BRANCH AND USE COMMAND:
+git checkout master
+git merge login
+--------------------------------------------------------------------
+5. Open github and create a repository then copy the link to that repository and run the following:
+   git remote add origin https://github.com/your-repo-url
+   git branch -M main
+   git push -u origin main
+
+6. git push origin master => Push to remote repository on github
+
+7. git pull => Pulls the latest changes from the REMOTE REPO repository
+
+
+
+7. git clone => COPIES a project from REMOTE REPO to your machine 
+
+We can add a .gitigonore file with the list of names of files we dont want to add to the staging
+e.g log.txt, /folder, *.txt
+
+
+-----------------Some Networking Commands-------------
+1. ipconfig and ipconfig/all => Gives everything related to your machine's Ip, gatewaye etc
+2. nslookup www.example.com or nslookup 151.142.144 => Gives the DNS record of address or IP 
+3. ping www.example.com  => Checks if a server is listening to your request and replies back
+4. tracert www.abc.com => Traces the route of the packets reaching to the specified server 
+5. netstat or netstat -a => Checks all the open or established tcp/ip udp/ip connections and their ports info
+
+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
