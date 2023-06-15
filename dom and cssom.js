@@ -8,7 +8,6 @@
 
 /*---------------The Document Object----------------*/
 // The document object is a property of the Window object
-
 // PROPERTIES OF DOCUMENT OBJECT
 let dom;
 dom = window.document; // Gives us a reference to the document object
