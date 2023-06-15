@@ -1,7 +1,7 @@
 /*--------------JS Fundamentals-------------*/
 // JS Script tags
-// IN NORMAL CIRCUMSTANCES JS IS PARSER BLOCKING I.E. BROWSER STOPS PARSING DOM FURTHER UNTIL IT EXECUTES THE JS
-// This parser blocking happens because the browser has to avoid race conditions i.e. Js can also access and change dom along with DOMparser at same time
+// IN NORMAL CIRCUMSTANCES JS IS PARSER BLOCKING I.E. BROWSER STOPS PARSING DOM FURTHER UNTIL IT EXECUTES THE JS ON THE MAIN THREAD
+// This parser blocking happens because the browser has to avoid race conditions i.e. Js can also access and change dom/cssomo along with DOMparser at same time
 // There can be following scenarios:
 // Embedded Js: The js written inside the html file in script tags when encountered BLOCKS further parsing of DOM 
 // External Js:
@@ -41,6 +41,15 @@ console.clear();
 
 /*--------Variables and Keyword--------*/
 
+//------Naming conventions-----
+// Variable names can only have: letters, _, $ and numbers
+// A variable cannot start with a number
+// A variable starting with $ is usually for jQuery
+// A variable starting with _ is usually for private variables
+// Recommended to use camelCase for naming
+// PascalCase recommended for class names and constructors
+
+
 // Three type of variables are there: var, let, const
 // var------> ES5 and before
 // let and const-----> Introduced in ES6 or ES2015
@@ -55,13 +64,7 @@ console.log(name);
 var variable; 
 console.log(variable); //undefined
 
-//------Naming conventions-----
-// Variable names can only have: letters, _, $ and numbers
-// A variable cannot start with a number
-// A variable starting with $ is usually for jQuery
-// A variable starting with _ is usually for private variables
-// Recommended to use camelCase for naming
-// PascalCase recommended for class names and constructors
+
 
 // var has a function scope and let has a block scope
 // var can be redeclared with same identifier and won't throw an error while let cannot be redeclared with same name
@@ -105,6 +108,7 @@ person = {
 // This means let x =5; let y=x; x++; y is still 5 bcz the values of x was copied to y beforehand
 // All the primitive types are literal values string literal, boolean literal etc
 // They can aslo be declared using their constrctors as objects eg new String('value')
+// If we use String() without new it will be type casting the value passed to a string
 // Reference type is also called object type and these are copied by address not value
 // For example let x={a:1, b:2}; let y = x; Now both x and y point to the same object in memroy
 // Primitive Type: String, Number, Boolean, Null, Undefined, Symbol(ES6), BigInt
@@ -123,6 +127,9 @@ console.log(typeof hasKids); // Returns boolean
 const number = 123;
 console.log(typeof number); // Returns number
 
+const notanum = NaN;
+console.log(typeof notanum); //Returns number
+
 const car = null;        // Though it is primitive still
 console.log(typeof car); // it returns object type which is a bug
 
@@ -130,7 +137,7 @@ console.log(typeof car); // it returns object type which is a bug
 // const test; undefined It will throw an error
 
 const test = undefined;
-console.log(typeof test);
+console.log(typeof test); // Returns undefined
 
 const sym = Symbol();
 console.log(typeof sym);

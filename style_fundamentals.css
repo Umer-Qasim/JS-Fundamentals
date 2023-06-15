@@ -14,6 +14,8 @@
  * The server then responds by sending a HTML page/doc with BINARY STREAM FORMAT in it
  * This BSF is basically a text file with the headers of content-type=text/html and charset = UTF-8
  * The content-type header and the char encoding helps the browser decode and convert the binary into the html format
+ * To convert this binary stream format into understandable HTML the browser engine does the conversion as: 
+   Bytes(BSF) => Characters(Using the charset value) => Tokenization( Accounting for all the html tags etc)
  * We can check the headers of a request and the hosting server info, CORS info in the network tab of browser
  * If there is no header present the browser will simply render the file in text format 
  * Now the browser starts reading/parsing the html document
@@ -53,7 +55,8 @@
 
 /*-------------- Critical Rendering Path -----------*/
 /* The browser loads the web page in a certain sequence:
- * As soon as it receives a few characters or lines of the html response in binary stream format it starts parsing the doc for DOM Creation
+ * As soon as it receives a few characters or lines of the html response in binary stream format it starts parsing the doc for DOM Creationok
+ 
  * This DOM parsing happens on the main thread and all the other download operations of external resources are done concurrently on other threads
  * The browser creates DOM INCREMENTLY i.e. one node after another as the html is a nested structure like a tree
  * If the browser encounters an embedded or inline style it will concurrently create the CSSOM on the main thread and this will not block the DOM Parsing
@@ -63,6 +66,9 @@
  * THE ONLY WAY CSS WILL BLOCK THE CRITICAL RENDERING PATH IS IF THE BROWSER IS DONE PARSING DOM BUT THE STYLES ARE STILL DOWNLOADING HENCE BLOCKING THE RENDER TREE
  * The critical rendering path is as follows:
  * DOM CREATION/SCRIPT EXECUTION => CSSOM CREATION => RENDER TREE CREATION => LAYOUT OPERATION => PAINT OPERATION(LAYERS OF CONTENT/Z-AXIS) => COMPOSITING OPERATION
+ * CSS is render blocking as if there is no CSSOM the critical rendering path wont progress and browser wont show any content
+ * JS is also render blocking as whenever a script is encountered it is executed immidiately. The execution of a script also needs the CSSOM to be constructed already
+   as it can alter the styles of the elements in the DOM
 */
 
 /*----------- CSS Terms -----------*/
@@ -70,10 +76,10 @@
  * RULE: A css rule consists of a selector and a declaration block
  * DECLARATION: A css declaration consists of a property and a declared value
  * PSEUDO ELEMENTS: A pseudo-element is a ‘fake’ element, it isn’t really in the document with 
- * the ‘real’ ones e.g. p::after, p::before, p::first-letter, p::first-line
+ * the ‘real’ ones e.g. p::after, p::before, p::first-letter, p::first-line They can be used to style a specific PART of an element
  * PSEUDO CLASSES: These are like ‘fake’ classes that are applied to elements under certain 
  * conditions, much like how you would manipulate the classes of elements using JavaScript e.g.:
- * p:first-child, p:hover, :root etc
+ * p:first-child, p:hover, :root etc They can be used to style a specific STATE of an element
 
 // THE CSSOM IS ALL ABOUT FINDING THE RIGHT CSS VALUE FOR EACH COMPONENT OR RESOLUTION OF VALUE FOR AN ELEMENT
 
@@ -84,36 +90,36 @@
  * between different CSS rules and declarations, when more than one rule applies to 
  * a certain element.
  * There are SEVERAL SOURCES for CSS in a browser:
-   i.   The CSS written by the developer known as AGENT CSS
-   ii.  The CSS controlled by user e.g. user sets a specific font size in browser,
+   i.   The CSS written by the developer is known as Author CSS
+   ii.  The CSS controlled by user e.g. user sets a specific font size in browser settings,
         this stylesheet is known as USER CSS
    iii. The CSS which is by default applied by the browser e.g. link tag appears blue and 
-        underlined, these are called USER-AGENT CSS and IT MIGHT ME DIFFERENT FOR DIFFERENT BROWSERS(Good to normalize/Reset css for cross browser)
+        underlined, these are called USER-AGENT/AGENT CSS and IT MIGHT ME DIFFERENT FOR DIFFERENT BROWSERS(Good to normalize/Reset css for cross browser)
     iv. The CSS specifications according to W3 schools
 
 
  * ---------------------- WHICH CSS TO BE APPLIED-------------------
- * The browser determines which CSS to be applied to certain HTML using a set of rules:
- * Source and Priority [!important] > SPECIFICITY > SOURCE ORDER
+ * The browser determines which CSS to be applied to certain HTML using a COMBINATION OF SELECTOR'S SPECIFICITY AND SOURCE PRIORITY as set of rules:
+ * Source  > SPECIFICITY/Priority [!important](Within Same Source)
 
 
 
  * ******* Source & Priority ********
  * The normal priority of Sources is as follows:
- * Inline Agent > External/Embedded Agent(depends <link> comes later or <style>) > User > User-AGENT > W3C
+ * User > Inline author > Internal author (does not depends on <link> comes later or <style>) > External Author > User-AGENT
  * These are the most prioritized set of declartions which include !important keyword
  * They have the following specificty according to CSS sources
- * User Agent !important > User Important > Agent Inline !important / Agent Embedded !important/Agent External !important > User-AGENT > W3C
+ * User Important > Author Inline !important > Author Internal !important > Author External !important > User-AGENT > W3C
 
  * ******* SPECIFICITY ********
- * In case there is a tie between two or more declaration originating from the same source then specificity is checked
+ * In case there is a tie between two or more rules originating from the same source then specificity is checked
  * The specificity regarding an individual source is as follows:
- * Inline > IDs > classes, pseudo-classes, attributes > Elements, pseudo elements
+ * Inline > ID > classes, pseudo-classes, attributes > Elements, pseudo elements
  * Calculation of specificity (Inline, IDs, Classes, Elements)
  * nav#menu div.pull-right .button = (0, 1, 2, 2)
 
  * ******* ORDER ********
- * In case the specificity of the declarations also results in same value the order of declarations is checked
+ * In case the specificity of the selectors also results in same value the order of declarations is checked
  * The conflicting declarations with equal specificty are resolved by determining their order
  * The declartion which was the included later most will win here
 
@@ -127,23 +133,24 @@
 
 /*----------- Determination of final CSS Values -----------*/
 /*
- * 1. DECLARED VALUE: At this step browser finds all the declared values for html
+ * 1. DECLARED VALUE: At this step browser finds all the declared css values for an html element
  * 2. CASCADED VALUE: The conflict between declared values is resolved and one is selected
- * 3. SPECIFIED VALUE: If no cascadded value found then check for inherited values, if inheritance applies then
-                       it is used as a specified value, if no inheritance applicable use initial values from UA stylesheet
-                       If cascaded values was found then it is the specified value directly
+ * 3. SPECIFIED/INHERITED VALUE: If no cascadded value found then check for inherited values, if inheritance applies then
+                       inherited value is used, if no inheritance applicable use initial values from UA stylesheet
+                       If cascaded values was found then it is the specified value directly. a specified value may also be an inherited value,
+                       an inherited value cannot be a specified value in CSS.
  * 4. COMPUTED VALUE: rem, em and CSS values like orange, auto, bolder all relative values are computed in pixels here
- * 5. USED VALUE: Final calculation based on layout, e.g. % converted to pixels etc
- * 6. ACTUAL VALUE: The browser finally rounds off and uses this values in layout
+ * 5. USED VALUE/ACTUAL VALUE: Final calculation based on layout, e.g. % converted to pixels etc. The browser finally rounds off and uses this values in layout
+
 
  ************* LEARNING OUTCOMES **************
  * Each property has an initial value, used if nothing is declared and no inheritance is applicable
  * Browsers specify a root-font-size of 16px i.e. from the User agent CSS not from CSS specification
  * % and relative values are always converted to pixels
  * %ages are measured relative to parent's font-size, if used to specify font-size
- * %ages are measured relative to parent's WIDTH & HEIGHT if used to specify the lengths
+ * %ages are measured relative to just parent's WIDTH  if used to specify the height/width/padding/margin
  * em are measured relative to their PARENTS font size if used to specify font size
- * em are measured relative to their CURRENT font size if used to specify lengths
+ * em are measured relative to their OWN font size if used to specify lengths
  * rem are always measured relative to document's root font-size i.e. 16px
  */
  
@@ -197,7 +204,7 @@
  * As a general rule of thumb use:
  * rem for font-sizes
  * em for paddings and margins
- * %ages and em for widths
+ * %ages and em for widths/heights
  *
  *---------------Fun Facts---------------------
  * We can use Emojis as class names as well 
@@ -233,8 +240,8 @@
        background-color or background-image apply to this whole area rather than just the content 
        BORDER-BOX:The box-sizing property allows us to include the padding and border in an element's 
        total width and height. The width and height we set give priority to the padding and border only i.e. their 
-       values are allocated in the layout no matter how much the browser have to squeze the content's width and height
-       SO IN CASE THE PADDING LEFT + PADDING RIGHT +BORDER LEFT + BORDER RIGHT => SPECIFIED WIDTH AND HEIGHT the total value
+       values are allocated in the layout no matter how much the browser have to squeeze the content's width and height
+       SO IN CASE THE CONTENT + PADDING LEFT + PADDING RIGHT + BORDER LEFT + BORDER RIGHT => SPECIFIED WIDTH AND HEIGHT the total value
        value of padding + borders is applied to the box rather than the specified height and width
        CONTENT-BOX: The default value of box-sizing and specifies the width and height on content only i.e. padding and
        border values are additionally applied to the element
@@ -243,7 +250,7 @@
 
       BLOCK: 
        The display: block, flex, list-item, table convert an element into a block level elem
-       The block level element occupies 100% of its parent's WIDTH
+       The block level element occupies 100% of its parent's WIDTH by default
        Block level elements appear vertically one after other
       INLINE:
        The display:inline
@@ -266,10 +273,29 @@
        we use clear on the oncoming elements so they clear the floats from both directions
        The element is not removed from the normal flow
 
-      ABSOLUTE POSITIONING:
+       STATIC:
+       The default position of each element if no position is specified by the author
+       Each element stays in the normal flow and we cannot set the top, right, bottom, left values
+
+       RELATIVE:
+       Element is not removed from the normal flow and can be positioned relative to its normal position in the flow
+       using the top, bottom, right and left properties
+
+      ABSOLUTE POSITIONING AND FIXED:
        Element is removed from the normal flow
        position: absolute and position: fixed specify absolute positioning
+       In fixed position the element will remain visible all the time on the fixed position even if the doc is scrolled
+       The elements' position is calculated based on the nearest positioned ancestor and if no nearest ancestor is positioned
+       then the position is calculated based on the top most asncestor
+       We can set the position using top right left and bottom properties
        No impact on surrounding content or elements
+
+     STICKY: 
+      Sticky position is a combination of fixed and relative positioning
+      The element is not removed from the normal flow
+      The element stays in the normal flow like relative positioning till a certain point
+      The element becomes fixed after a certain scrolling point and will act as position was fixed
+      We can use the top left bottom and right properties to set the position 
 
   iv) The Stacking Context
       z-index, tranform, opacity less than 1 create a new stacking context
@@ -285,9 +311,9 @@
 
  * When building use a specific methodology for naming elements
  * BEM => Block Element Modifier
- * BLOCK: A standalone component that has a meaning of its own  e.g. .recipe
+ * BLOCK: A standalone component that has a meaning of its own  e.g. .recipe and can have nested blocks
  * ELEMENT: A part of block that has no stand-alone meaning e.g. .recipe__img or .recipe__btn
- * MODIFIER: A different version of a block OR an element e.g. .btn .recipe__btn .btn--round
+ * MODIFIER: A different version of a block OR an element e.g. classname=.btn .recipe__btn .btn--round
 
  * A very useful article for BEM: https://www.smashingmagazine.com/2016/06/battling-bem-extended-edition-common-problems-and-how-to-avoid-them/
 
@@ -296,13 +322,49 @@
  * The 7-1 architecture specifies that we should have 7 different folders for partial SaSS files
  * All these partial Sass files should be funneled/imported into ONE CSS COMPILED SHEET
  * These 7 folders include:
-    base/       Basic project definitions
+    base/       Basic project definitions e.g. resets and typography
     components/ One file for each component
     layout/     Overall layout of the project
     pages/      Style for specific pages of project
     themes/     If we want to implement diff visual themes
     abstracts/  The code which doesnot output any CSS e.g. mixins, variables
     vendors/    All the third party CSS
+    sass/
+| EXAMPLE
+|– abstracts/
+|   |– _variables.scss    # Sass Variables
+|   |– _mixins.scss       # Sass Mixins
+|
+|– vendors/
+|   |– _bootstrap.scss    # Bootstrap
+|
+|– base/
+|   |– _reset.scss        # Reset/normalize
+|   |– _typography.scss   # Typography rules
+|
+|– layout/
+|   |– _navigation.scss   # Navigation
+|   |– _grid.scss         # Grid system
+|   |– _header.scss       # Header
+|   |– _footer.scss       # Footer
+|   |– _sidebar.scss      # Sidebar
+|   |– _forms.scss        # Forms
+|
+|– components/
+|   |– _buttons.scss      # Buttons
+|   |– _carousel.scss     # Carousel
+|   |– _cover.scss        # Cover
+|   |– _dropdown.scss     # Dropdown
+|
+|– pages/
+|   |– _home.scss         # Home specific styles
+|   |– _contact.scss      # Contact specific styles
+|
+|– themes/
+|   |– _theme.scss        # Default theme
+|   |– _admin.scss        # Admin theme
+|
+ – main.scss              # Main Sass input file use the @import to import all partials and does not contain any styles
  * Not ALL Folders are always required
 */
 
@@ -315,13 +377,14 @@
  * The SASS files are not deployed to the server only the compiled css file is deployed
  * SASS is actually CSS on steroids i.e. we can use variables, loops, conditionals, mixins, functions
  * // can be used to write comments in scss files
+ * Variables can be defined using $var1:value;  whereas in css we use --var1:value
  * Nesting becomes very easy in SASS by using curly braces we can avoid complicated selectors
- * & can be used to replace the path of parent selector inside its curly braces
+ * & can be used to replace the path of parent selector inside its curly braces a {} a:hover{} => a{ &:hover{}}
  * So for .main .main__paragraph we can do is .main{... #{&}__paragraph{...}} which will translate to .main .main__paragraph
  * Varibales can be defined starting with $ sign
  * background-color: lighten(#fff, 10%) and darken(#aaa , 20%) can also be used
- * Mixins are reusable code snippets we can use and are defined as @minxin mixin-name{...}
- * Mixins can be used as @include mixin-name; and we can also pass vars to these mixins as @include mixin-name($param){...}
+ * Mixins are reusable code snippets we can use and are defined as @minxin mixin-name(){...}
+ * Mixins can be used as @include mixin-name(); and we can also pass vars to these mixins as @include mixin-name($param){...}
  * Arguments can be passed in the mixin and can be used as normal in the body of the mixin
  * e.g. @mixin mixin-name($arg-1, $arg-2){here use these args}
  * We can also use a mixin by defining a media query in it as @mixin mobile{@media(max-width:$varValue){ @content; }} and

@@ -1,6 +1,6 @@
 /*---------------DOM----------------*/
 
-// DOM is actually a tree of nodes or we can say html elements
+// DOM is actually an equavilent tree of nodes in similarity to the html elements in the html doc
 // created by the browser
 // JS can manipulate/read/write to DOM
 // Now Vanilla JS is equally good as jQuery to maniplate DOM
@@ -13,7 +13,7 @@
 let dom;
 dom = window.document; // Gives us a reference to the document object
 console.log(dom);
-//SHOULD ALWAYS INCLUD SCRIPT TAG AT THE END OF HTML FILE TO GET ALL ELEMENTS
+//SHOULD ALWAYS INCLUDE SCRIPT TAG AT THE END OF HTML FILE TO GET ALL ELEMENTS
 // Ways to access elements in DOM tree using document object
 // 1st Method
 dom = window.document.all; // Gives us an indexed html collection of document object
@@ -48,16 +48,16 @@ console.log(dom);
 // IT IS NOT THE RECOMMENDED WAY
 // These will also return html collections
 let forms;
-forms = document.forms; // Gives html collection of forms
+forms = document.forms; // Gives html collection of form elements/nodes
 console.log(forms);
 
-let links = document.links; // Gives html collection of links
+let links = document.links; // Gives html collection of link elements
 console.log(links); // To access a specific links just use index
 console.log(links[0]); // Gives first link
 console.log(links[0].className); // We can get ther className and id as well
 console.log(links[0].classList) // We can get a collection of classes
 
-let images = document.images; // Gives html collection of images
+let images = document.images; // Gives html collection of image elements
 console.log(images);  // Collection of all images
 console.log(images[0]); // Selects the first image
 console.log(images[0].attributes); // Gets the Map of all attributes of 1st image
@@ -96,14 +96,16 @@ console.log(imageContainer.classList); // Has no class we'll get empty list
 document.getElementById('img-container').style.border = 'black 1px solid';
 // We can change anything we can change in css
 // THERE IS A NEWER AND MORE EFFICIENT WAY OF STYLING ELEMENTS IN CHROME NOW
-// Using the element.attributeStyleMap.set('font-size', 12)
+// Using the element.attributeStyleMap.set('font-size', CSS.px(12))
 // element.attributeStyleMap.set/get/values/entries/has/delete all are methods
 
 // We can also change the markup text of the element
 
 // 1st Method
 // The textContent property sets or returns the text content 
-// of the specified node, and all its descendants.
+// of the specified node, and all its descendants. 
+// textContent returns the text content of an element, including the text of its descendants, as it is in the DOM, without styles applied. 
+// It returns the text content of all elements, including hidden ones.
 document.getElementById('name').textContent = `Umer the Gr${2*4}`;
 // Let's try this on a parent element
 // document.getElementById('grid-container').textContent = "Hello"
@@ -111,6 +113,8 @@ document.getElementById('name').textContent = `Umer the Gr${2*4}`;
 // Not better to use in my opinion
 
 // 2nd Method
+// innerText returns or sets the text content of an element, 
+// including the text of its descendants, as it appears on the screen(with line breaks \n), with CSS styles applied. It does not return hidden elements.
 document.getElementById('name').innerText = `Umer The Developer`;
 
 // 3rd Method
@@ -144,6 +148,9 @@ console.log(document.body);
 /*---------------Multiple Element Selectors----------------*/
 
 // They select multiple elements and return either an html collection or Nodelist
+// An HTML Collection updates dynamically whereas a Nodelist won't update dynamically when the document changes
+// Consider it as if the function returning an HTML Collection will give us a reference to actual DOM Node Snapshot Object
+// WHEREAS the function returning the NodeList will return us a deeply copied over list which wont change if the original doc changes
 // Both are similar to array and can be converted to arrays easily
 
 // 1st Mehtod
@@ -367,7 +374,7 @@ parent.removeAttribute('title');
 
  * //--------------The inline CSS-----------------//
  * The inline CSS can be manipulated or read by the conventional method:
- * document.querySelector('body').style.color = 'green'; OR
+ * document.querySelector('body').style.color = 'green'; OR element.attributeStylemap.set('property',CSS.px(value))
  * console.log(document.querySelector('body').style) // OUTPUTS THE INLINE STYLES ONLY OF THE SELECTED NODE
  * THIS WILL ONLY ADD OR READ FROM THE INLINE STYLES OF AN HTML ELEMENT i.e. the styles of that element in the external
  * or embedded sheet are NOT read
