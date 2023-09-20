@@ -1,27 +1,104 @@
-/*---------------Domain Name System(DNS) resolution----------*/
+/*-----------The Internet-------------*/
+/*
+* The internet can be thought of as a vast network of devices connected to each other through certain sets of protocols. 
+* These devices can include computers, smartphones, servers, routers, and various other devices capable of connecting to the internet. 
+* These devices communicate with each other using a set of protocols, which are essentially a set of rules and conventions that 
+  dictate how data should be transmitted, received, and interpreted across the network.
+
+* These protocols include both wired and wireless communication standards, and they play a crucial role in enabling devices to interact
+  with each other seamlessly. Here are some key points about these protocols:
+
+Wired Protocols: 
+* Wired protocols involve physical connections between devices using cables or other physical mediums. 
+Some common examples include:
+Ethernet: This is a widely used protocol for local area networks (LANs), where devices are connected through wired connections using
+Ethernet cables.
+USB (Universal Serial Bus): USB is a protocol for connecting devices like computers, smartphones, and peripherals using cables.
+HDMI (High-Definition Multimedia Interface): HDMI is a protocol for transmitting high-quality audio and video signals between devices, 
+often used for connecting devices to displays.
+
+Wireless Protocols: 
+Wireless protocols enable devices to communicate without physical connections. Some common examples include:
+Wi-Fi: Wi-Fi is a wireless protocol that allows devices to connect to the internet and local networks using radio waves.
+Bluetooth: Bluetooth is a short-range wireless protocol used for connecting devices like headphones, speakers, and smartphones.
+Cellular Networks: Cellular networks, like 4G and 5G, use wireless protocols to provide internet connectivity to mobile devices over 
+large geographical areas.
+These protocols work together to enable the seamless flow of data across the internet. When you access a website, send an email, 
+stream a video, or engage in any online activity, your device communicates with other devices and servers across the internet using 
+these protocols.
+
+Higher Level Protocols:
+In addition to the communication protocols mentioned above, there are also higher-level protocols that govern specific tasks 
+such as sending and receiving emails (SMTP, IMAP), browsing the web (HTTP, HTTPS), transferring files (FTP), and more. 
+All these protocols collectively form the foundation of the interconnected digital world we know as the internet.
+
+Higher-level protocols are a set of rules and conventions that dictate how data should be structured, transmitted, and interpreted 
+at a more abstract level than the lower-level protocols we discussed earlier. 
+These protocols provide a framework for specific tasks and applications that involve more complex interactions between devices
+and systems. Here are some examples of higher-level protocols:
+
+HTTP (Hypertext Transfer Protocol): HTTP is the foundation of data communication on the World Wide Web. 
+It defines how web browsers request web pages from servers and how servers respond with the requested content. 
+HTTPS (HTTP Secure) is a secure version of HTTP that uses encryption to protect the data being transmitted.
+
+FTP (File Transfer Protocol): FTP is used for transferring files between computers over a network. 
+It provides a way to upload and download files to and from a remote server.
+
+SMTP (Simple Mail Transfer Protocol) and IMAP (Internet Message Access Protocol): These protocols are used for sending and receiving
+emails, respectively. SMTP handles the sending of emails, while IMAP is used to retrieve emails from a mail server.
+
+POP3 (Post Office Protocol version 3): Similar to IMAP, POP3 is another protocol used for retrieving emails from a mail server. 
+It downloads emails to the local device, often deleting them from the server.
+
+DNS (Domain Name System): DNS is a protocol used to translate human-readable domain names (like www.example.com) into IP addresses,
+allowing devices to locate each other on the internet.
+
+SSH (Secure Shell): SSH is a protocol for secure remote access to computers and servers over a potentially insecure network.
+It provides encrypted communication and authentication.
+
+SNMP (Simple Network Management Protocol): SNMP is used for managing and monitoring network devices, such as 
+routers, switches, and servers. It allows administrators to gather information and manage devices remotely.
+
+VoIP (Voice over Internet Protocol): VoIP protocols, like SIP (Session Initiation Protocol), enable voice and multimedia communication
+over the internet, allowing for services like internet-based phone calls and video conferencing.
+
+XMPP (Extensible Messaging and Presence Protocol): XMPP is a protocol for real-time communication, 
+often used for instant messaging and presence information (e.g., whether a user is online or offline).
+
+WebSocket: WebSocket is a protocol that provides full-duplex communication channels over a single TCP connection, 
+allowing for interactive and real-time web applications.
+
+These higher-level protocols build upon the lower-level communication protocols like 
+TCP/IP (Transmission Control Protocol/Internet Protocol) and UDP (User Datagram Protocol) to enable specific applications 
+and services on the internet. They define how data should be formatted, how requests and responses should be structured, 
+and how devices should interact to accomplish various tasks.
+*/
+
+
+/*---------------Domain Name System(DNS)resolution----------*/
 /*
  * The DNS resolution process involves at least 4 servers after failing to find an address locally, the browser only
  * sends its request to recursor and then waits for recursor to provide a resolved response/IP address
  * 1. Recursor server or DNS Recursor - Provided by the ISP, first step, can be thought as a librarian, makes all requests
- * 2. Root nameserver - Second step, reference to further specific locations, can be thought of as a row number of racks
- * 3. TLD nameserver - Top level domain server, resolves last part i.e. .com etc., can be thought of as a rack# with books
- * 4. Authoritative nameserver - Final step, By hosting provider, Can be thought as dictionary on that rack with all definitions 
+ * 2. Root nameserver - Second step, reference to further specific locations, can be thought of as a row number of racks returns tld servers address
+ * 3. TLD nameserver - Top level domain server, resolves last part i.e. .com etc., can be thought of as a rack# with books returns authoritative ns's address
+ * 4. Authoritative nameserver - Final step, By hosting provider, Can be thought as dictionary on that rack with all definitions returns the final address
 */ 
 /* ------------- The CSS Fundamentals ------------*/
 /* How browser renders a web page: https://medium.com/jspoint/how-the-browser-renders-a-web-page-dom-cssom-and-rendering-df10531c9969 
  * --------------The HTML Rendering---------------- *
  * The browser looks up for the ip address associated to the DOMAIN and sends it a get request
- * The server then responds by sending a HTML page/doc with BINARY STREAM FORMAT in it
- * This BSF is basically a text file with the headers of content-type=text/html and charset = UTF-8
- * The content-type header and the char encoding helps the browser decode and convert the binary into the html format
- * To convert this binary stream format into understandable HTML the browser engine does the conversion as: 
-   Bytes(BSF) => Characters(Using the charset value) => Tokenization( Accounting for all the html tags etc)
+ * The server then responds by sending a BINARY STREAM FORMAT to the browser
+ * This BSF is basically a stream of binary data which includes the response headers of content-type=text/html and charset = UTF-8
+ * The received binary response also will have a response body which will be parsed by browser based on the previously identified
+ * The content-type header and the char encoding helps the browser decode and convert the binary response body into the html format
+ * To convert this binary data into understandable/parseable HTML the browser engine does the conversion as: 
+   Bytes(BSF) => Characters (Using the charset value) => Tokenization (Accounting for all the html tags etc)
  * We can check the headers of a request and the hosting server info, CORS info in the network tab of browser
  * If there is no header present the browser will simply render the file in text format 
- * Now the browser starts reading/parsing the html document
+ * Now the browser starts reading/parsing the html document to create DOM
  * For each line-break, comment, html element the browser creates an equivalent JS NODE
  * NODE is a parent class in Js and it has sub classes like HTMLDivElement, HtmlScriptElement, HTMLAudioElement, HTMLButtonElement... so on
- * NODE also has sub classes like Comment etc
  * So the browser calls the respective subclass' constructor to create the Js objects e.g. for every div element the browser will call new HTMLDivElement()
  * After creating all the objects the browser creates a tree structure with the html object/element at the root
  * This tree structure of equivalent html elements/objects is called the Document Object Model
@@ -34,14 +111,14 @@
 /*-------------- CSS Behind the Scenes -----------*/
 /* 
  * The browser rendering happens in a certain format
- * 1. Browser loads HTML
- * 2. Starts parsing HTML, when comes to <link rel="stylesheet"> starts loading CSS and continues HTML
- * 2.1 Browser parses HTML => Browser develops DOM
+ * 1. Browser translates binary to HTML
+ * 2. Starts parsing HTML, when comes accross <link rel="stylesheet"> starts loading CSS and continues HTML
+ * 2.1 Browser finishes parsing HTML => Browser develops DOM
  * 2.2.1 Browser starts parsing CSS
  * 2.2.1.1 While Parsing CSS two things happen:
          i.  Browser resolves conflicting CSS  i.e. determines which declaration to apply to 
-             certain HTML parts, based on the specificity of selectors
-         ii. Browser computes the style values in pixels i.e. percentages etc are converted
+             certain HTML parts, based on the cascade rules
+         ii. Browser computes the style values in pixels i.e. percentages etc are converted to
              literal values.
 
  * 2.2 CSSOM [CSS OBJECT MODEL] is created
