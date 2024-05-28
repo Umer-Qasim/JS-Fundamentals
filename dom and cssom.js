@@ -50,14 +50,14 @@ let forms;
 forms = document.forms; // Gives html collection of form elements/nodes
 console.log(forms);
 
-let links = document.links; // Gives html collection of link elements
+let links = document.links; // Gives html collection of link Nodes
 console.log(links); // To access a specific links just use index
 console.log(links[0]); // Gives first link
 console.log(links[0].className); // We can get ther className and id as well
 console.log(links[0].classList) // We can get a collection of classes
 
-let images = document.images; // Gives html collection of image elements
-console.log(images);  // Collection of all images
+let images = document.images; // Gives html collection of image Nodes
+console.log(images);  // Collection of all image Nodes
 console.log(images[0]); // Selects the first image
 console.log(images[0].attributes); // Gets the Map of all attributes of 1st image
 console.log(images[0].attributes[0]); // Gets the the first attribute out of the map
@@ -92,7 +92,7 @@ console.log(imageContainer.className); // Has no class we'll get empty string
 console.log(imageContainer.classList); // Has no class we'll get empty list
 
 // Styling the selected element
-document.getElementById('img-container').style.border = 'black 1px solid';
+document.getElementById('img-container').style.border = 'black 1px solid'; //puts an inline style and keeps appending to it
 // We can change anything we can change in css
 // THERE IS A NEWER AND MORE EFFICIENT WAY OF STYLING ELEMENTS IN CHROME NOW
 // Using the element.attributeStyleMap.set('font-size', CSS.px(12))
@@ -238,7 +238,7 @@ console.log(parent.lastChild); // Gives us the first child node i.e. #text
 // Getting the last children element => Only gives first element
 console.log(parent.lastElementChild); // Gives us the last children element div
 
-// Getting the count of child elements
+// Getting the count of direct child elements
 console.log(parent.childElementCount);
 
 //------METHODS TO GET PARENT NODES AND ELEMENTS------//

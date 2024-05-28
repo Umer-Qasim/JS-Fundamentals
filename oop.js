@@ -7,6 +7,8 @@
 
 
 // Creating Objects
+// Method - 0
+// Using the Object constructor function explicitly: let user = new Object()
 // Method - I - Using object literals
 // Object literal syntax
 // Objects basically contain key value pairs 
@@ -22,6 +24,19 @@ const circle = {
         console.log('draw');
     }
 };
+// dot notation can be used to access the properties whose key is readily known e.g. circle.radius
+// [] notation can be used to access values either when iterating through the object i.e. property keys not readily known
+// OR the key are strings with invalid variable naming (starts with a num, special char etc) e.g. circle['is filled'] -> theres a space in key name
+// To add a property to an object DYNAMICALLY we can use the computed way to add it e.g. let deal = day==='tuesday' ? 'BOGO' : 'fiftyOff';
+// let shop = {[deal]:true} // if tueday object will have BOGO: true else fiftyOff:true
+/* let obj = {
+    for: 1,
+    let: 2,
+    return: 3
+  }; //It is a valid object
+*/
+
+
 
 // Method - II - Using factory functions
 // Factory Functions
@@ -42,12 +57,18 @@ function createCircle(radius, location) {
 
 // Method - III - Using constructor functions
 // Constructor Function
+// CONSTRUCTOR FUNCTION USUALLY IS NEVER AN ARROW FUNTION AS THE ARROW FUNCTION DOES NOT HAVE ITS OWN THIS
+// CONSTUCTOR FUNCTION, IF IT RETURNS AN OBJECT THAT OBJECT WILL BE RETURNED INSTEAD OF THIS EVEN WHEN CALLED WITH NEW
+// CONSTRUCTOR FUNCTION, IF RETURNS A PRIMITIVE OR JUST A RETURN; THEN THE RETURN IS IGNORED AND STILL THIS IS RETURNED
+// WE CAN USE target.new inside the consturctor function to check if it was called using new keyword i.e. contains itself if
+// called with new otherwise target.new is undefined
+// new User() is equivalent to new User without parantheses
 // Naming convention is different. Use PascalCase
 function Circle(radius, location) {
     // Properties
     // the 'this' reference variable is a pointer to the object executing the code
     // In global context using this refers to window object
-    // i.e. this points to the current object
+    // i.e. this points to the current object on which the code is being executed
     // In javascript objects are dynamic, means that we can add properties to them after they are initialized
     // so the this variable does the same after the new keyword initializes an empty object 
     // this then adds the properties to that empty object
@@ -64,7 +85,7 @@ function Circle(radius, location) {
 // THE new KEYWORD
 // Three things happen when the new keyword is executed
 // 1- An empty new object is created
-// 2- The this reference variable is set to that object
+// 2- The this reference variable is set/points to that object
 // 3- The 'this' is returned so that the address of the current object is assigned to the LHS variable
 
 /*--------------Dynamic Behavior of Objects------------*/
@@ -80,6 +101,52 @@ console.log(circle1);
 // Remove from the circle object
 delete circle1.location;
 console.log(circle1);
+
+/*--------------Objects to Literal Conversion/Operator Overloading------------*/
+// In JS an operation on object such as addition obj1+obj2 CANNOT result in an object
+// There is an exception for Date objects which can result in the date, time difference/summation when used with + or -
+// So there is no operator overloading for object in JS
+// There are some rules based on which objects are converted to certain formats:
+// The JS engine uses something called hints. The hints actually are the possible intended type conversion that the obj should be converted to
+// For example, if we are using an object in alert(obj), here the intended primitive type to which obj should be converted to is string
+// Here are the hint types:
+// 'number': This hint type occurs when the engine tries to convert the object to number for example when we try to do obj1>obj2
+// 'string': Occurs when the engine determins that obj should be converted to a string e.g. console.log(obj1)
+// 'default': Occurs in rare cases when the operator is “not sure” what type to expect. For instance, binary plus + can work both 
+// with strings (concatenates them) and numbers (adds them). 
+// So if a binary plus gets an object as an argument, it uses the "default" hint to convert it. 
+// NOTE: ONLY THE COMPARISON OPERATOR GENERATES THE HINT AS 'number'. others such as +, == these generate 'default' hint
+/*To do the conversion, JavaScript tries to find and call three object methods:
+
+// Call obj[Symbol.toPrimitive](hint):
+//   the method with the symbolic key Symbol.toPrimitive (system symbol), if such method exists,
+// Otherwise if hint is "string":
+//      try calling obj.toString() or obj.valueOf(), whatever exists.
+// Otherwise if hint is "number" or "default":
+     try calling obj.valueOf() or obj.toString(), whatever exists.
+*/
+// An example:
+/*
+    obj={firstName:'Umer', lastName:'Qasim'}; // Define a regular object
+
+    obj[Symbol.toPrimitive] = function (hint){ // We are overloading all the type of hints by overloading the function
+        if (hint==='number')
+            return (10);
+        if (hint==='string')
+            return (this.firstName + ' ' + this.lastName);
+        if (hint==='default')
+            return (this.lastName + ' ' + this.firstName);
+    }
+    Now the outputs:
+    String(obj) -> 'Umer Qasim' // The engine determines the hint as 'string' so the string condition is met and returns the resultant
+    Number(obj) -> 10           // hint is generated as number
+    'Qasim Umer' == obj -> true // hint is generated as default and default return is 'Qasim Umer'
+
+
+*/
+
+
+
 
 
 /*--------------Constructor Property------------*/
@@ -279,6 +346,12 @@ console.log(cloned3);
 // Any DATE object will no longer be an object rather it will be stringified
 // Any infinity value will be forced to null
 // Any keys with FUNCTIONS as values will also be lost
+
+// Method - 5
+// structuredClone(obj) create a deep copy of obj even if there are circular references
+// This method CANNOT CLONE/DEEPLY COPY PROPERTIES WHICH HAVE FUNCTIONS AS VALUE
+
+
 
 
 /*--------------Abstraction------------*/
@@ -752,6 +825,10 @@ console.log(Animal.name);
 
 // In JavaScript, this inside a function/method is meant to reference the object that the 
 // function is a property of.
+// IN STRICT MODE THIS DOES NOT POINT TO GLOBAL OBJECT BY DEFAULT WHEN FUNCTION CALL IS MADE AS A FREE INVOKATION
+// THIS IS UN INITIALIZED UNTIL IT IS BEING USED IN A METHOD CONTEXT I.E. IF WE USE IT AS A VALUE FOR A KEY ITS UNDEFINED:
+// let obj = {key:'value', thisvar:this} here this is undefined/not set yet since its not inside a method and the method is not called
+// The value of this in JS is evaluated/determined at runtime
 
 // RULES FOR DETERMINING THE VALUE OF THIS KEYWORD
 // 1 - If the 'new' keyword is used when calling the function, this inside the function is a 
@@ -763,8 +840,9 @@ console.log(Animal.name);
 // 3 - If a function is called as a method — that is, if dot notation is used to invoke the function — 
 // this is the object that the function is a property of.
 
-// 4 - If a function is invoked as a free function invocation, meaning it was invoked without any of the
-// conditions present above, this is the global object. In a browser, it’s window.
+// 4 - If a function is invoked as a free function invocation IN LAX MODE, meaning it was invoked without any of the
+// conditions present above, this is the global object (ONLY IN LAX MODE). In a browser, it’s window. In strict mode this will be
+// undefined in case of free function invocation
 
 // 5 - If multiple of the above rules apply, the rule that is higher wins and will set the this value.
 
@@ -802,8 +880,15 @@ draw(); // Refers to window object as it is in the window context by default
 
 // METHOD - II USING SYMBOLS - SEMI PRIVATE PROPERTIES
 // Symbol() whenever called generates a unique identifier
+// it can have an identifier as Symbol('id'), here id is an indentifier/descriptor
+// Symbols even created with same identifier are not equal
+// Once a Symbol is created we have to store it in a local variable to be able to use it as a key so we can write/access the property
 // This is not a constructor so note that we do not use new keyword with it
 // So Symbol() != Symbol()
+// There is a Global space where we can store symbol using syntax Symbol.for(key) 
+// If the Symbol with that specific key was already created then we can get that symbol and store it a local var and use it to access
+// If the symbol was not there in the Global registry then its created and returned at the same time to be used
+// Symbol does not appear when object iterated using for in loop. It can be retrieved using Object.getOwnPropertySymbols(obj) or Reflect.ownKeys(obj)
 // In ES6 we have a feature called computed property name which means we can use an expression instead of
 // using a name and the result of the expression will be considered as the property name
 const _firstName = Symbol();
@@ -849,7 +934,7 @@ console.log(Object.getOwnPropertySymbols(umer));
 // It is called a weak map bcz the keys are weak which means if there is no reference available
 // to the keys the keys are garbage collected
 
-const _property = new WeakMap();
+const _property = new WeakMap();aaxzaZs3xz
 const _method = new WeakMap();
 class Demo {
     constructor(property) {

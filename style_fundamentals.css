@@ -8,7 +8,7 @@
 * These protocols include both wired and wireless communication standards, and they play a crucial role in enabling devices to interact
   with each other seamlessly. Here are some key points about these protocols:
 
-Wired Protocols: 
+Wired Protocols:     
 * Wired protocols involve physical connections between devices using cables or other physical mediums. 
 Some common examples include:
 Ethernet: This is a widely used protocol for local area networks (LANs), where devices are connected through wired connections using
@@ -88,9 +88,9 @@ and how devices should interact to accomplish various tasks.
 /* How browser renders a web page: https://medium.com/jspoint/how-the-browser-renders-a-web-page-dom-cssom-and-rendering-df10531c9969 
  * --------------The HTML Rendering---------------- *
  * The browser looks up for the ip address associated to the DOMAIN and sends it a get request
- * The server then responds by sending a BINARY STREAM FORMAT to the browser
+ * The server then responds by sending data in BINARY STREAM FORMAT to the browser
  * This BSF is basically a stream of binary data which includes the response headers of content-type=text/html and charset = UTF-8
- * The received binary response also will have a response body which will be parsed by browser based on the previously identified
+ * The received binary response also will have a response body which will be parsed by browser based on the previously identified content type
  * The content-type header and the char encoding helps the browser decode and convert the binary response body into the html format
  * To convert this binary data into understandable/parseable HTML the browser engine does the conversion as: 
    Bytes(BSF) => Characters (Using the charset value) => Tokenization (Accounting for all the html tags etc)
@@ -132,9 +132,8 @@ and how devices should interact to accomplish various tasks.
 
 /*-------------- Critical Rendering Path -----------*/
 /* The browser loads the web page in a certain sequence:
- * As soon as it receives a few characters or lines of the html response in binary stream format it starts parsing the doc for DOM Creationok
- 
- * This DOM parsing happens on the main thread and all the other download operations of external resources are done concurrently on other threads
+ * As soon as it receives a few characters or lines of the html response in binary stream format it starts parsing the doc for DOM Creation
+ * This DOM parsing happens on the main thread and all the other download operations of external resources are handled concurrently by browser 
  * The browser creates DOM INCREMENTLY i.e. one node after another as the html is a nested structure like a tree
  * If the browser encounters an embedded or inline style it will concurrently create the CSSOM on the main thread and this will not block the DOM Parsing
  * If the browser encounters an external style sheet through a link tag it will not block the dom parsing but will download that sheet on the side silently
@@ -153,18 +152,18 @@ and how devices should interact to accomplish various tasks.
  * RULE: A css rule consists of a selector and a declaration block
  * DECLARATION: A css declaration consists of a property and a declared value
  * PSEUDO ELEMENTS: A pseudo-element is a ‘fake’ element, it isn’t really in the document with 
- * the ‘real’ ones e.g. p::after, p::before, p::first-letter, p::first-line They can be used to style a specific PART of an element
+ * the ‘real’ ones e.g. p::after, p::before, p::first-letter, p::first-line They can be used to style specific PARTs of the DOM
  * PSEUDO CLASSES: These are like ‘fake’ classes that are applied to elements under certain 
  * conditions, much like how you would manipulate the classes of elements using JavaScript e.g.:
- * p:first-child, p:hover, :root etc They can be used to style a specific STATE of an element
+ * p:first-child, p:hover, :root etc They can be used to style the specific STATEs of elements in the DOM
 
 // THE CSSOM IS ALL ABOUT FINDING THE RIGHT CSS VALUE FOR EACH COMPONENT OR RESOLUTION OF VALUE FOR AN ELEMENT
 
 
-/*----------- Specificity(CASCADING) of CSS Selectors -----------*/
+/*----------- Specificity (CASCADING) of CSS Selectors -----------*/
 /*
  * CASCADE: Process of combining different stylesheets and resolving conflicts
- * between different CSS rules and declarations, when more than one rule applies to 
+ * between different CSS rules and declarations, when more than one rule/declaration applies to 
  * a certain element.
  * There are SEVERAL SOURCES for CSS in a browser:
    i.   The CSS written by the developer is known as Author CSS
@@ -179,14 +178,49 @@ and how devices should interact to accomplish various tasks.
  * The browser determines which CSS to be applied to certain HTML using a COMBINATION OF SELECTOR'S SPECIFICITY AND SOURCE PRIORITY as set of rules:
  * Source  > SPECIFICITY/Priority [!important](Within Same Source)
 
+ The determination is made by filtering out in steps as follows:
+
+1. Relevance (all irrelevent rules filtered out)
+2. Origin and importance (based on precedence of origin rest of the styles are disregarded see table)
+3. Specificity (within the same source)
+4. Scoping proximity (within the same source whatever selector has lower hops to the dom)
+5. Order of appearance (within the same source)
 
 
- * ******* Source & Priority ********
- * The normal priority of Sources is as follows:
- * User > Inline author > Internal author (does not depends on <link> comes later or <style>) > External Author > User-AGENT
- * These are the most prioritized set of declartions which include !important keyword
- * They have the following specificty according to CSS sources
- * User Important > Author Inline !important > Author Internal !important > Author External !important > User-AGENT > W3C
+
+    Precedence Order (low to high)	
+     Style Origin	                    Importance
+------------------------------------------------
+1	user-agent - first declared layer	      normal
+  user-agent - last declared layer        normal
+  user-agent - unlayered styles           normal
+------------------------------------------------
+2	user - first declared layer	            normal
+  user - last declared layer              normal
+  user - unlayered styles                 normal
+------------------------------------------------
+3	author - first declared layer	          normal
+  author - last declared layer            normal
+  author - unlayered styles               normal
+  author - inline style                   normal
+------------------------------------------------
+4	animations	                              -
+------------------------------------------------
+5	author - unlayered styles	            !important
+  author - last declared layer          !important
+  author - first declared layer         !important
+  inline style                          !important
+------------------------------------------------
+6	user - unlayered styles	              !important
+  user - last declared layer            !important
+  user - first declared layer           !important
+------------------------------------------------
+7	user-agent - unlayered styles	        !important
+  user-agent - last declared layer      !important
+  user-agent - first declared layer     !important
+------------------------------------------------
+8	transitions	                              -
+------------------------------------------------
 
  * ******* SPECIFICITY ********
  * In case there is a tie between two or more rules originating from the same source then specificity is checked
@@ -204,7 +238,7 @@ and how devices should interact to accomplish various tasks.
  * TO TARGET THE HOVER, CHECKED, ENABLED ETC. PSEUDO CLASSES OF AN ELEMENT, THE SPECIFICITY OF 
  * THE STYLE APPLIED WITHOUT ANY PSEUDO CLASS SHOULD BE LOWER OR EQUAL TO THE SPECIFICITY OF
  * SELECTOR USING WHICH WE ARE APPLYING THE PSEUDO STATE CSS
- * e.g. #div a.link {background-color: black} with a:hover {background-color:blue} wont work
+ * e.g. #div a.link {background-color: black} with a:hover {background-color:blue} the hover rule here wont work
  * This also applies to the media queries when overwriting styles
 
 
@@ -219,6 +253,22 @@ and how devices should interact to accomplish various tasks.
  * 4. COMPUTED VALUE: rem, em and CSS values like orange, auto, bolder all relative values are computed in pixels here
  * 5. USED VALUE/ACTUAL VALUE: Final calculation based on layout, e.g. % converted to pixels etc. The browser finally rounds off and uses this values in layout
 
+ /*----------- Inheritance in CSS -----------*/
+/*
+ * EVERY PROPERTY in css should have a VALUE
+ * While parsing the CSS the browser tries to find the cascaded value of an element first
+ * If no declared or cascaded value is found, it tries to check if the element has an
+ * INHERITED VALUE e.g. if parent has a line height, the child will automatically get it by inheritance
+ * If the property is non inheritable, the browser will set the specified value equal to the one
+ * defined in the CSS Specifications as initial value i.e. specified value = initial value
+
+ ************* LEARNING OUTCOMES **************
+ * Inheritance passes value to children in case of some SPECIFIC PROPERTIES
+ * As a rule of thumb properties related to TEXT AND FONTS ARE INHERITED e.g. text-align
+ * font-size, color, line-height etc.
+ * Inheritance only works when neither the browser nor the developer specify any values for a given element
+ * The "inherit" keyword can be used to FORCE INHERITANCE on a property
+ * The "initial" keyword can be used to FORCE RESET any property being inherited to initial value
 
  ************* LEARNING OUTCOMES **************
  * Each property has an initial value, used if nothing is declared and no inheritance is applicable
@@ -230,24 +280,6 @@ and how devices should interact to accomplish various tasks.
  * em are measured relative to their OWN font size if used to specify lengths
  * rem are always measured relative to document's root font-size i.e. 16px
  */
- 
-/*----------- Inheritance in CSS -----------*/
-/*
- * EVERY PROPERTY in css should have a VALUE
- * While parsing the CSS the browser tries to find the cascaded value of an element first
- * If no declared or cascaded value is found, it tries to check if the element has an
- * INHERITED VALUE e.g. if parent has a line height, the child will automatically get it by inheritance
- * If the property is non inheritable, the browser will set the specified value equal to the one
- * defined in the CSS Specifications as initial value i.e. specified value = initial value
-
-************* LEARNING OUTCOMES **************
- * Inheritance passes value to children in case of some SPECIFIC PROPERTIES
- * As a rule of thumb properties related to TEXT AND FONTS ARE INHERITED e.g. text-align
- * font-size, color, line-height etc.
- * Inheritance only works when neither the browser nor the developer specify any values for a given element
- * The "inherit" keyword can be used to FORCE INHERITANCE on a property
- * The "initial" keyword can be used to FORCE RESET any property being inherited to initial value
-*/
 
 
 /*----------- rem and other CSS tricks -----------*/
@@ -310,17 +342,18 @@ and how devices should interact to accomplish various tasks.
    i) The Box Model
        Considers each and every element as a box that can have a height, a width, paddings, border,
        margins
-       The height and width combined constitute the content area
+       The specified height and width combined constitute the content area
        The padding and margins are optional i.e. they can be 0 as well
-       The values of padding and border width are added to the content to determine total width of box
-       fill-area: The fill area is considered as the padding + border + content and all the
+       The values of padding and border width are added to the content area to determine total width of box
+       fill-area: The fill area is considered as the padding + border + content area and all the
        background-color or background-image apply to this whole area rather than just the content 
-       BORDER-BOX:The box-sizing property allows us to include the padding and border in an element's 
-       total width and height. The width and height we set give priority to the padding and border only i.e. their 
+       There is a property which controls how the specified witdth and height should be applied to a bpx and this property is box-sizing
+       BORDER-BOX:The box-sizing property allows us to include the padding and border width in an element's 
+       total width and height. The width and height we set give priority to the padding and border's specified width only i.e. their 
        values are allocated in the layout no matter how much the browser have to squeeze the content's width and height
-       SO IN CASE THE CONTENT + PADDING LEFT + PADDING RIGHT + BORDER LEFT + BORDER RIGHT => SPECIFIED WIDTH AND HEIGHT the total value
+       SO IN CASE THE CONTENT AREA+ PADDING LEFT + PADDING RIGHT + BORDER LEFT + BORDER RIGHT => SPECIFIED WIDTH AND HEIGHT the total value
        value of padding + borders is applied to the box rather than the specified height and width
-       CONTENT-BOX: The default value of box-sizing and specifies the width and height on content only i.e. padding and
+       CONTENT-BOX: The default value of box-sizing specifies the width and height on content only i.e. padding and
        border values are additionally applied to the element
   ii) The Box Type
       The Box type can be block, inline-block, inline
@@ -340,7 +373,7 @@ and how devices should interact to accomplish various tasks.
        Width and height can be applied
        Occupies only content's space
        No line-breaks
-       Box-model applies as normal i.e. padding and margin
+       Box-model applies as block i.e. padding and margin can be applied
 
  iii) The Positioning Scheme
       FLOAT: 
